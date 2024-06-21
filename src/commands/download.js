@@ -1,8 +1,11 @@
 import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 import Search from '../modules/Search.js';
 import SearchService from '../services/SearchService.js';
 import DownloadService from '../services/DownloadService.js';
 import CredentialsService from '../services/CredentialsService.js';
+
 const log = console.log;
 
 // Available file modes
@@ -10,21 +13,24 @@ const modes = ['mp3', 'flac'];
 
 class DownloadCommand {
   constructor(queries, options) {
+    // Validate if queries are provided
     if (queries.length === 0) {
-      log(chalk.red('Please add a search query'));
+      console.log(chalk.red('Please add a search query or provide a valid --tracklist file'));
       process.exit(1);
     }
 
+    // Validate other options as before
     if (!modes.includes(options.mode)) {
-      log(chalk.red(`--mode is invalid. Valid values: ${modes.join(', ')})`));
+      console.log(chalk.red(`--mode is invalid. Valid values: ${modes.join(', ')}`));
       process.exit(1);
     }
 
     if (options.mode === 'flac' && options.quality) {
-      log(chalk.red('--quality is incompatible with the "flac" mode. Please remove this option.'));
+      console.log(chalk.red('--quality is incompatible with the "flac" mode. Please remove this option.'));
       process.exit(1);
     }
 
+    // Initialize with options and queries
     this.options = options;
     this.searchService = new SearchService(queries);
     this.downloadService = new DownloadService(this.searchService);

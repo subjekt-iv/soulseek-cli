@@ -3,6 +3,7 @@ import fs from 'fs';
 import process from 'process';
 
 export default function (destination) {
+  console.log('Initializing DestinationDirectory with:', { destination });
   this.destination = destination;
 
   /**
@@ -11,6 +12,7 @@ export default function (destination) {
    * @return {string}
    */
   this.getDestinationDirectory = (directory) => {
+    console.log('Getting destination directory for:', { directory });
     let dir;
 
     if (this.destination) {
@@ -23,6 +25,7 @@ export default function (destination) {
       dir = process.cwd() + path.sep + directory;
     }
 
+    console.log('Final destination directory:', dir);
     createIfNotExist(dir);
 
     return dir;
@@ -34,13 +37,14 @@ export default function (destination) {
  * @param {string} dir
  */
 let createIfNotExist = (dir) => {
+  console.log('Creating directory if it does not exist:', { dir });
   const dirList = dir.split(path.sep);
   let buildPath = '';
 
   for (let i = 0; i < dirList.length; i++) {
     buildPath += dirList[i] + path.sep;
-
     if (!fs.existsSync(buildPath)) {
+      console.log('Creating directory:', buildPath);
       fs.mkdirSync(buildPath);
     }
   }
