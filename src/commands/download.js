@@ -13,6 +13,19 @@ const modes = ['mp3', 'flac'];
 
 class DownloadCommand {
   constructor(queries, options) {
+    // Process tracklist file if provided
+    if (options.tracklist) {
+      const tracklistPath = path.resolve(options.tracklist);
+      try {
+        // Read tracklist file and split into queries
+        const tracklistContent = fs.readFileSync(tracklistPath, 'utf-8');
+        queries = tracklistContent.split('\n').map(line => line.trim()).filter(line => line !== '');
+      } catch (err) {
+        console.log(chalk.red(`Error reading tracklist file ${tracklistPath}: ${err.message}`));
+        process.exit(1);
+      }
+    }
+
     // Validate if queries are provided
     if (queries.length === 0) {
       console.log(chalk.red('Please add a search query or provide a valid --tracklist file'));
@@ -33,7 +46,7 @@ class DownloadCommand {
     // Initialize with options and queries
     this.options = options;
     this.searchService = new SearchService(queries);
-    this.downloadService = new DownloadService(this.searchService);
+    this.downloadService = new DownloadService(this.searchService, options.destination); // Pass destination to DownloadService
     this.search = null;
 
     this.credentialsService = new CredentialsService();
