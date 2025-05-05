@@ -6,6 +6,7 @@ import Download from './Download.js';
 const log = console.log;
 
 export default function (searchService, downloadService, options, client) {
+  console.log('Initializing search with options:', options);
   this.download = new Download(downloadService, searchService, options, client);
   this.filterResult = new FilterResult(options.quality, options.mode);
   this.searchService = searchService;
@@ -20,6 +21,10 @@ export default function (searchService, downloadService, options, client) {
   this.search = () => {
     const query = this.searchService.getNextQuery();
     log(chalk.green("Searching for '%s'"), query);
+    console.log('Search parameters:', {
+      req: query,
+      timeout: this.timeout,
+    });
     const searchParam = {
       req: query,
       timeout: this.timeout,
@@ -33,10 +38,14 @@ export default function (searchService, downloadService, options, client) {
    */
   this.onSearchFinished = (err, res) => {
     if (err) {
-      return log(chalk.red(err));
+      log(chalk.red(err));
+      console.error('Error during search:', err);
+      return;
     }
 
+    console.log('Search results:', res);
     const filesByUser = this.filterResult.filter(res);
+    console.log('Filtered results:', filesByUser);
     this.checkEmptyResult(filesByUser);
 
     if (this.showPrompt) {
@@ -55,15 +64,18 @@ export default function (searchService, downloadService, options, client) {
   this.checkEmptyResult = (filesByUser) => {
     if (_.isEmpty(filesByUser)) {
       log(chalk.red('Nothing found'));
+      console.log('No files found for current query.');
       this.searchService.consumeQuery();
 
       if (this.searchService.allSearchesCompleted()) {
+        console.log('All searches completed. Exiting.');
         process.exit(1);
       }
 
       this.search();
     } else {
       log(chalk.green('Search finished'));
+      console.log('Files found for current query.');
     }
   };
 
@@ -79,6 +91,7 @@ export default function (searchService, downloadService, options, client) {
       const topResult = String(_.keys(filesByUser)[0]);
       log(chalk.green('Search returned ' + numResults + ' results'));
       log(chalk.blue('Top result: %s'), topResult);
+      console.log('Top result:', topResult);
     }
   };
 
@@ -92,15 +105,19 @@ export default function (searchService, downloadService, options, client) {
 
     log(chalk.green('Displaying ' + numResults + ' search results'));
 
+    // Limiting choices to five results
+    const choices = _.keys(filesByUser).slice(0, 5); // Get the first five keys
+
     const options = {
       type: 'rawlist',
       name: 'user',
       pageSize: 10,
       message: 'Choose a folder to download',
-      choices: _.keys(filesByUser),
+      choices: choices,
     };
     inquirer.prompt([options]).then((answers) => this.processChosenAnswers(answers, filesByUser));
   };
+
 
   /**
    * From the user answer, trigger the download of the folder
@@ -110,10 +127,12 @@ export default function (searchService, downloadService, options, client) {
    * @param filesByUser
    */
   this.processChosenAnswers = (answers, filesByUser) => {
+    console.log('User selected:', answers);
     this.searchService.consumeQuery();
     this.download.startDownloads(filesByUser[answers.user]);
 
     if (this.searchService.allSearchesCompleted()) {
+      console.log('All searches completed. Flushing download log.');
       this.downloadService.downloadLogger.flush();
       this.downloadService.everyDownloadCompleted();
     } else {

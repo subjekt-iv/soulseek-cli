@@ -5,6 +5,7 @@ import DestinationDirectory from './DestinationDirectory.js';
 const log = console.log;
 
 export default function (downloadService, searchService, options, client) {
+  console.log('Initializing download with options:', options);
   this.destinationDirectory = new DestinationDirectory(options.destination);
   this.downloadService = downloadService;
   this.searchService = searchService;
@@ -17,6 +18,7 @@ export default function (downloadService, searchService, options, client) {
    * @param {array} files
    */
   this.startDownloads = (files) => {
+    console.log('Preparing to download files:', files);
     this.downloadService.prepareDownload(files);
     files.forEach((file) => this.downloadFile(file));
   };
@@ -27,6 +29,7 @@ export default function (downloadService, searchService, options, client) {
    * @param file
    */
   this.downloadFile = (file) => {
+    console.log('Downloading file:', file);
     const fileStructure = file.file.split('\\');
     const directory = fileStructure[fileStructure.length - 2];
     const filename = fileStructure[fileStructure.length - 1];
@@ -37,6 +40,7 @@ export default function (downloadService, searchService, options, client) {
     };
 
     if (this.checkFileExists(data.path, filename)) {
+      console.log('File already exists:', data.path);
       return;
     }
 
@@ -48,6 +52,7 @@ export default function (downloadService, searchService, options, client) {
         process.exit();
       }
 
+      console.log('Download complete for file:', down.path);
       this.downloadService.downloadComplete(down.path);
     });
   };

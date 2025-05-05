@@ -3,6 +3,7 @@ import _ from 'lodash';
 const pluralize = (noun, count, suffix = 's') => `${count} ${noun}${count !== 1 ? suffix : ''}`;
 
 export default function (qualityFilter, mode) {
+  console.log('Initializing FilterResult with:', { qualityFilter, mode });
   this.qualityFilter = qualityFilter;
   this.mode = mode;
 
@@ -14,22 +15,32 @@ export default function (qualityFilter, mode) {
    * @return {array}
    */
   this.filter = (res) => {
+    console.log('Filtering results:', res);
+
     res = filterByFreeSlot(res);
+    console.log('After filtering by free slot:', res);
 
     if (this.mode === 'mp3') {
       res = keepOnlyMp3(res);
+      console.log('After keeping only mp3:', res);
     }
 
     if (this.mode === 'flac') {
       res = keepOnlyFlac(res);
+      console.log('After keeping only flac:', res);
     }
 
     if (this.qualityFilter) {
       res = filterByQuality(this.qualityFilter, res);
+      console.log('After filtering by quality:', res);
     }
 
     res = sortBySpeed(res);
-    return getFilesByUser(res);
+    console.log('After sorting by speed:', res);
+
+    const filesByUser = getFilesByUser(res);
+    console.log('Final files by user:', filesByUser);
+    return filesByUser;
   };
 }
 
@@ -38,21 +49,33 @@ export default function (qualityFilter, mode) {
  * @param {array} res
  * @returns {array}
  */
-let filterByFreeSlot = (res) => res.filter((r) => r.slots === true && r.speed > 0);
+let filterByFreeSlot = (res) => {
+  const filtered = res.filter((r) => r.slots === true && r.speed > 0);
+  console.log('Filtered by free slot:', filtered);
+  return filtered;
+};
 
 /**
- * Remove everything that is not a mp3
+ * Remove everything that is not an mp3
  * @param {array} res
  * @returns {array}
  */
-let keepOnlyMp3 = (res) => res.filter((r) => path.extname(r.file) === '.mp3');
+let keepOnlyMp3 = (res) => {
+  const filtered = res.filter((r) => path.extname(r.file) === '.mp3');
+  console.log('Filtered to keep only mp3:', filtered);
+  return filtered;
+};
 
 /**
  * Remove everything that is not a flac
  * @param {array} res
  * @returns {array}
  */
-let keepOnlyFlac = (res) => res.filter((r) => path.extname(r.file) === '.flac');
+let keepOnlyFlac = (res) => {
+  const filtered = res.filter((r) => path.extname(r.file) === '.flac');
+  console.log('Filtered to keep only flac:', filtered);
+  return filtered;
+};
 
 /**
  * If a quality filter is defined, keep only the folders with the defined bitrate
@@ -60,13 +83,21 @@ let keepOnlyFlac = (res) => res.filter((r) => path.extname(r.file) === '.flac');
  * @param {array} res
  * @returns {array}
  */
-let filterByQuality = (qualityFilter, res) => res.filter((r) => r.bitrate === parseInt(qualityFilter, 10));
+let filterByQuality = (qualityFilter, res) => {
+  const filtered = res.filter((r) => r.bitrate === parseInt(qualityFilter, 10));
+  console.log('Filtered by quality:', filtered);
+  return filtered;
+};
 
 /**
  * Display the fastest results first
  * @param {array} res
  */
-let sortBySpeed = (res) => res.sort((a, b) => b.speed - a.speed);
+let sortBySpeed = (res) => {
+  const sorted = res.sort((a, b) => b.speed - a.speed);
+  console.log('Sorted by speed:', sorted);
+  return sorted;
+};
 
 /**
  * Compute the average bitrate of a folder
@@ -81,6 +112,7 @@ let getAverageBitrate = (files) => {
     averageBitrate = Math.round(sum / files.length);
   }
 
+  console.log('Average bitrate calculated:', averageBitrate);
   return averageBitrate;
 };
 
@@ -96,6 +128,7 @@ let getFolderSize = (files) => {
     size = Math.round(files.reduce((a, b) => a + b.size, 0) / 1024 / 1024);
   }
 
+  console.log('Folder size calculated:', size);
   return size;
 };
 
@@ -111,6 +144,7 @@ let getSpeed = (files) => {
     speed = Math.round(files[0].speed / 1024);
   }
 
+  console.log('Speed calculated:', speed);
   return speed;
 };
 
@@ -127,6 +161,8 @@ let getFilesByUser = (res) => {
     const resDirectory = resFileStructure[resFileStructure.length - 2];
     return resDirectory + ' - ' + r.user;
   });
+
+  console.log('Grouped files by user:', rawFilesByUser);
 
   for (const prop in rawFilesByUser) {
     let extraInfo = [];
@@ -149,5 +185,6 @@ let getFilesByUser = (res) => {
     filesByUser[`${prop} (${extraInfo.join(', ')})`] = rawFilesByUser[prop];
   }
 
+  console.log('Final files by user with extra info:', filesByUser);
   return filesByUser;
 };
