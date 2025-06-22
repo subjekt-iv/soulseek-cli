@@ -2,6 +2,7 @@ import chalk from 'chalk';
 const log = console.log;
 
 export default function (searchService, downloadService) {
+  console.log('Initializing downloadLogger with searchService and downloadService');
   this.searchService = searchService;
   this.downloadService = downloadService;
   this.logBuffer = '';
@@ -14,6 +15,8 @@ export default function (searchService, downloadService) {
   this.downloadComplete = (path) => {
     this.fileIndex++;
     let logInfo = '(' + this.fileIndex + '/{{totalFileCount}}) Received: ' + path;
+
+    console.log('Download complete for file:', path);
 
     if (this.searchService.allSearchesCompleted()) {
       logInfo = logInfo.replace(/{{totalFileCount}}/g, this.downloadService.getFileCount());
@@ -29,6 +32,7 @@ export default function (searchService, downloadService) {
   this.flush = () => {
     if (this.logBuffer.length > 0) {
       this.logBuffer = this.logBuffer.replace(/{{totalFileCount}}/g, this.downloadService.getFileCount()).slice(0, -1);
+      log('Flushing log buffer:');
       log(this.logBuffer);
       this.logBuffer = '';
     }
@@ -40,5 +44,6 @@ export default function (searchService, downloadService) {
    */
   this.startDownload = (fileCount) => {
     log(chalk.green('Starting download of ' + fileCount + ' file' + (fileCount > 1 ? 's' : '') + '...'));
+    console.log('Starting download of', fileCount, 'file(s)');
   };
 }
